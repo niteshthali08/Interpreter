@@ -1,14 +1,14 @@
 symbolTableStack = []
 functionExecutionValueStack = []
 functionReturnAddressStack = []
-
+debug = 0
 def read_program():
+    debug = 1;
     program = []
     i=0
     try:
         #'recursive.am'
-
-        with open('local_global.am') as f:
+        with open('fibonaci.am') as f:
             for line in f:
                 line = line.strip()
                 program.append(line)
@@ -18,13 +18,9 @@ def read_program():
         exit(-1)
     return program
 
-def display_program(data):
-    if type(data) is list:
-        for line in data:
-            print line
-    elif type(data) is dict:
-        for key, val in data.items():
-            print key, '->', val
+def consol_log(data):
+    if debug:
+        print data
 def compare_values(val1, val2):
     try:
         val1 = int(val1)
@@ -56,9 +52,8 @@ def look_up(key):
 
 def execute_program(program):
     symbolTableStack.append({}) # global symbol table
+    symbolTableStack[0]['type'] = 'GLOBAL'
     line = 0
-    whichTable = 'global'
-    nestedLevel = 0
     noOfLines = len(program)
     noOfParameters = 0
     while line < noOfLines:
@@ -70,19 +65,25 @@ def execute_program(program):
                 line = line + 1
 
         elif contents[0] == 'MOVE': #when assigning
-                symbolTableStack[-1][contents[1]] = int(contents[2])
+            symbolTableStack[-1][contents[1]] = int(contents[2])
+            consol_log(symbolTableStack)
 
         elif contents[0] == 'FCAL':
             funcSymbolTable = {}
+            funcSymbolTable['type'] = 'FUNCTION'
             funcName = contents[1]
             line = line + 1
             find = None
-            sub = False
+            sub1= False
+            sub2 = False
             contents = program[line].split(' ')
             while line < noOfLines and contents[0] == "PUSH":
-                if contents[1] == "DEC1":
+                if contents[1] == 'DEC1':
                     find = contents[2]
-                    sub = True
+                    sub1 = True
+                elif contents[1] == 'DEC2':
+                    find = contents[2]
+                    sub2 = True
                 else:
                     find = contents[1]
                 noOfParameters += 1
@@ -90,19 +91,22 @@ def execute_program(program):
                     print 'ERROR: variable ',contents[1], 'is not defined'
                     exit(-1)
                 funcSymbolTable[find] = symbolTableStack[-1][find]
-                if(sub):
+                if(sub1):
                     funcSymbolTable[find] -= 1
+                elif (sub2):
+                    funcSymbolTable[find] -= 2
                 line += 1
                 contents = program[line].split(' ')
             functionReturnAddressStack.append(line)
             symbolTableStack.append(funcSymbolTable)
             line = symbolTableStack[0][funcName]
             line = line -1
-
+            consol_log(symbolTableStack)
         elif contents[0] == 'ISTR':
             ifExecuted = False
             found = False
             line += 1
+            result = None
             contents = program[line].split(' ')
             if contents[0] == 'CEQL':
                 for i in range(len(symbolTableStack)-1, -1, -1):
@@ -115,18 +119,18 @@ def execute_program(program):
                     exit(-1)
 
                 if result != 0:
-                    while not program[line].startswith('SEND'):
+                    while not program[line].startswith('IEND'):
                         line += 1
-                    while program[line].startswith('SEND'):
-                        line += 1
-                    line -= 1
                 else:
                     ifExecuted = True
                     ifSymbolTable = {}
+                    ifSymbolTable['type'] = 'IF'
                     symbolTableStack.append(ifSymbolTable)
+                    consol_log(symbolTableStack)
 
         elif contents[0] == 'IEND':
             symbolTableStack.pop()
+            consol_log(symbolTableStack)
 
         elif contents[0] == 'SEND':
             val = None
@@ -134,25 +138,33 @@ def execute_program(program):
                 val = int (contents[1])
             except:
                 val = look_up(contents[1])
-            symbolTableStack.pop()
-            symbolTableStack.append(val)
-            line = functionReturnAddressStack[-1]
-            functionReturnAddressStack.pop()
-            line = line -1
-
+            index = len(symbolTableStack) - 1;
+            while (symbolTableStack[index]['type'] != 'FUNCTION'):
+                symbolTableStack.pop()
+                index -= 1
+            if index >=0 and symbolTableStack[index]['type'] == 'FUNCTION':
+                line = functionReturnAddressStack[-1]
+                functionReturnAddressStack.pop()
+                symbolTableStack.pop()
+                line = line -1
+                symbolTableStack.append(val)
+            else:
+                print "ERROR: Illegal return statement in the scope"
+            consol_log(symbolTableStack)
         elif contents[0] == 'LOAD': # for return value only
             val = symbolTableStack[-1]
             val = int(val)
             #print 'val: ',val
             symbolTableStack.pop()
             symbolTableStack[-1][contents[1]] = val
+            consol_log(symbolTableStack)
 
         elif contents[0] == 'MULT':
             n1 = look_up(contents[2])
             n2 = look_up(contents[3])
             v = n1 * n2
             symbolTableStack[-1][contents[1]] = v
-
+            consol_log(symbolTableStack)
         elif contents[0] == 'PRNT':
             val = look_up(contents[1])
             print val
@@ -160,11 +172,18 @@ def execute_program(program):
             symbolTableStack.pop()
             line = functionReturnAddressStack[-1]
             line -= 1
+            consol_log(symbolTableStack)
+        elif contents[0] == 'ADD':
+            n1 = look_up(contents[2])
+            n2 = look_up(contents[3])
+            v = n1 + n2
+            symbolTableStack[-1][contents[1]] = v
+            consol_log(symbolTableStack)
         line += 1
 
 
 if __name__ == "__main__":
     program = read_program()
-    #display_program(program)
+    consol_log(program)
     execute_program(program)
-    #display_program(symbolTableStack)
+    consol_log(symbolTableStack)

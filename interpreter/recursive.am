@@ -1,19 +1,19 @@
 FSTR fact
 ISTR
 CEQL n 0
-IEND
 SEND 1
+IEND
 ISTR
 CEQL n 1
+SEND 1
 IEND
-SEND 1 // return, only send is allowed between if and else
 FCAL fact
 PUSH DEC1 n // pushing n-1
 LOAD i // will take value from top of stack
 MULT n n i // n = n*i
 SEND n
 FEND
-MOVE n 0 // push order should be from right to left
+MOVE n 5
 FCAL fact
 PUSH n
 LOAD factorial

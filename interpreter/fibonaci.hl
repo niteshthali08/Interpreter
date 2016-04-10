@@ -1,0 +1,13 @@
+def fibonaci(n):
+    if n == 0 :
+        return 0
+    if n == 1:
+        return 1
+    f1 = fibonaci(n-1)
+    f2 = fibonaci(n-2)
+    res = f1 + f2
+    return res
+
+n = 3
+res = fibonaci(3)
+print res

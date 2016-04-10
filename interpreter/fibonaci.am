@@ -1,0 +1,23 @@
+FSTR fibonaci
+ISTR
+CEQL n 0
+SEND 0
+IEND
+ISTR
+CEQL n 1
+SEND 1
+IEND
+FCAL fibonaci
+PUSH DEC1 n
+LOAD f1
+FCAL fibonaci
+PUSH DEC2 n
+LOAD f2
+ADD res f1 f2
+SEND res
+FEND
+MOVE n 6
+FCAL fibonaci
+PUSH n
+LOAD res
+PRNT res
