@@ -1,7 +1,0 @@
-MOVE n 5
-FSTR simple
-MOVE n 10
-PRNT n
-FEND
-FCAL simple
-PRNT n
