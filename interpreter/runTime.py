@@ -42,9 +42,9 @@ def look_up(key):
                     found = True
                     value = symbolTableStack[i][key]
                     return int(value)
-            if not found:
-                print "ERROR: variable", key, 'is not defined'
-                exit(-1)
+        if not found:
+            print "ERROR: variable", key, 'is not defined'
+            exit(-1)
     except:
         print "ERROR: variable", key, 'is not defined'
         exit(-1)
@@ -87,10 +87,8 @@ def execute_program(program):
                 else:
                     find = contents[1]
                 noOfParameters += 1
-                if find not in symbolTableStack[-1]:
-                    print 'ERROR: variable ',contents[1], 'is not defined'
-                    exit(-1)
-                funcSymbolTable[find] = symbolTableStack[-1][find]
+
+                funcSymbolTable[find] = look_up(find)
                 if(sub1):
                     funcSymbolTable[find] -= 1
                 elif (sub2):
@@ -102,31 +100,33 @@ def execute_program(program):
             line = symbolTableStack[0][funcName]
             line = line -1
             consol_log(symbolTableStack)
-        elif contents[0] == 'ISTR':
-            ifExecuted = False
-            found = False
-            line += 1
-            result = None
-            contents = program[line].split(' ')
-            if contents[0] == 'CEQL':
-                for i in range(len(symbolTableStack)-1, -1, -1):
-                    if contents[1] in symbolTableStack[i]:
-                        found = True
-                        result = compare_values(symbolTableStack[i][contents[1]], contents[2])
-                        break;
-                if not found:
-                    print "ERROR: variable", contents[1], 'is not defined'
-                    exit(-1)
 
-                if result != 0:
-                    while not program[line].startswith('IEND'):
-                        line += 1
-                else:
-                    ifExecuted = True
-                    ifSymbolTable = {}
-                    ifSymbolTable['type'] = 'IF'
-                    symbolTableStack.append(ifSymbolTable)
-                    consol_log(symbolTableStack)
+        elif contents[0] == 'ISTR':
+            ifSymbolTable = {}
+            ifSymbolTable['type'] = 'IF'
+            ifSymbolTable['ifExecuted'] = False
+            symbolTableStack.append(ifSymbolTable)
+            consol_log(symbolTableStack)
+
+        elif contents[0] == 'CEQL':
+            found = False
+            result = None
+            for i in range(len(symbolTableStack)-1, -1, -1):
+                if contents[1] in symbolTableStack[i]:
+                    found = True
+                    result = compare_values(symbolTableStack[i][contents[1]], contents[2])
+                    break;
+
+            if not found:
+                print "ERROR: variable", contents[1], 'is not defined'
+                exit(-1)
+
+            if result != 0:
+                while not program[line].startswith('IEND'):
+                    line += 1
+                line -= 1
+            else:
+                symbolTableStack[-1]['ifExecuted'] = True
 
         elif contents[0] == 'IEND':
             symbolTableStack.pop()
