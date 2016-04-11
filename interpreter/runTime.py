@@ -7,7 +7,10 @@ def read_program():
     program = []
     i=0
     try:
-        #'recursive.am'
+        #'factorial.am'
+        # fibonaci.am
+        # while_loop.am
+        # local_global.am
         with open('fibonaci.am') as f:
             for line in f:
                 line = line.strip()
@@ -35,20 +38,49 @@ def compare_values(val1, val2):
         print "ERROR: Found Boolean data type"
         # write code to handle booleans
 def look_up(key):
-    found = False
     try:
+        key = int(key)
+        return key
+    except:
         for i in range(len(symbolTableStack)-1, -1, -1):
             if key in symbolTableStack[i]:
-                    found = True
                     value = symbolTableStack[i][key]
                     return int(value)
-        if not found:
-            print "ERROR: variable", key, 'is not defined'
-            exit(-1)
-    except:
-        print "ERROR: variable", key, 'is not defined'
-        exit(-1)
 
+        report_error(key)
+
+def get_end_of_block():
+    search = None
+    if symbolTableStack[-1]['type'] == 'IF':
+        search = 'IEND'
+    elif symbolTableStack[-1]['type'] == 'WHILE':
+        search = 'WEND'
+    else:
+        report_error(None)
+    return search
+
+def report_error(var):
+    if var == None:
+        print "ERROR: syntax error in the program"
+    else:
+        print "ERROR: variable", var, 'is not defined'
+    exit(-1)
+
+def get_comparision_result(v1, v2):
+    v1 = look_up(v1)
+    v2 = look_up(v2)
+    result = compare_values(v1, v2)
+    return result
+
+def update_symbol_table(key, val):
+    try:
+        for i in range(len(symbolTableStack) - 1, -1, -1):
+            if key in symbolTableStack[i]:
+                symbolTableStack[i][key] = val
+                return
+        report_error(key)
+    except:
+        print 'Exception in look up function'
 
 def execute_program(program):
     symbolTableStack.append({}) # global symbol table
@@ -101,37 +133,38 @@ def execute_program(program):
             line = line -1
             consol_log(symbolTableStack)
 
-        elif contents[0] == 'ISTR':
-            ifSymbolTable = {}
-            ifSymbolTable['type'] = 'IF'
-            ifSymbolTable['ifExecuted'] = False
-            symbolTableStack.append(ifSymbolTable)
+        elif contents[0] == 'ISTR' or contents[0] == 'WSTR':
+            symTable = {}
+            if contents[0] == 'ISTR':
+                symTable['type'] = 'IF'
+                symTable['ifExecuted'] = False
+            else:
+                symTable['type'] = 'WHILE'
+                symTable['start_loop'] = line  #loop start
+            symbolTableStack.append(symTable)
             consol_log(symbolTableStack)
 
-        elif contents[0] == 'CEQL':
-            found = False
-            result = None
-            for i in range(len(symbolTableStack)-1, -1, -1):
-                if contents[1] in symbolTableStack[i]:
-                    found = True
-                    result = compare_values(symbolTableStack[i][contents[1]], contents[2])
-                    break;
-
-            if not found:
-                print "ERROR: variable", contents[1], 'is not defined'
-                exit(-1)
-
-            if result != 0:
-                while not program[line].startswith('IEND'):
+        elif contents[0] == 'CEQL' or contents[0] == 'CLES' or contents[0] == 'CGTR':
+            result = get_comparision_result(contents[1], contents[2])
+            search = get_end_of_block()
+            if (result == 0 and contents[0] == 'CEQL') or (result == 1 and contents[0] == 'CGTR') or (result == -1 and contents[0] == 'CLES'):
+                if symbolTableStack[-1]['type'] == 'IF':
+                    symbolTableStack[-1]['ifExecuted'] = True
+            else:
+                while not program[line].startswith(search):
+                    if (search == 'WEND'):
+                        symbolTableStack[-1]['exit_loop'] = True
                     line += 1
                 line -= 1
-            else:
-                symbolTableStack[-1]['ifExecuted'] = True
 
         elif contents[0] == 'IEND':
             symbolTableStack.pop()
             consol_log(symbolTableStack)
-
+        elif contents[0] == 'WEND':
+            if 'exit_loop' not in symbolTableStack[-1]:
+                line = symbolTableStack[-1]['start_loop']
+            else:
+                symbolTableStack.pop()
         elif contents[0] == 'SEND':
             val = None
             try:
@@ -163,7 +196,7 @@ def execute_program(program):
             n1 = look_up(contents[2])
             n2 = look_up(contents[3])
             v = n1 * n2
-            symbolTableStack[-1][contents[1]] = v
+            update_symbol_table(contents[1], v)
             consol_log(symbolTableStack)
         elif contents[0] == 'PRNT':
             val = look_up(contents[1])
@@ -177,8 +210,15 @@ def execute_program(program):
             n1 = look_up(contents[2])
             n2 = look_up(contents[3])
             v = n1 + n2
-            symbolTableStack[-1][contents[1]] = v
+            update_symbol_table(contents[1], v)
             consol_log(symbolTableStack)
+        elif contents[0] == 'SUB':
+            n1 = look_up(contents[2])
+            n2 = look_up(contents[3])
+            v = n1 - n2
+            update_symbol_table(contents[1], v)
+            consol_log(symbolTableStack)
+
         line += 1
 
 

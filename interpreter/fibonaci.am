@@ -1,4 +1,5 @@
 FSTR fibonaci
+MOVE res 0
 ISTR
 CEQL n 0
 SEND 0

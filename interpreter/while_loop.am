@@ -1,0 +1,9 @@
+MOVE i 0
+MOVE n 10
+MOVE sum 0
+WSTR
+CLES i n
+ADD sum sum i
+ADD i i 1
+WEND
+PRNT sum
