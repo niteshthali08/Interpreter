@@ -1,10 +1,10 @@
-def fact(n):
-    if n == 1 or n == 0:
+def fact(k):
+    if k == 1 or k == 0:
         return 1
-    i = fact (n-1)
-    n = n * i
-    return n
+    i = fact (k-1)
+    k = k * i
+    return k
 
-print fact(4)
-
-
+n = 5
+factorial = fact(n)
+print factorial

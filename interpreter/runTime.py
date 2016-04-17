@@ -11,7 +11,7 @@ def read_program():
         # fibonaci.am
         # while_loop.am
         # local_global.am
-        with open('fibonaci.am') as f:
+        with open('while_loop.am') as f:
             for line in f:
                 line = line.strip()
                 program.append(line)
@@ -43,7 +43,8 @@ def look_up(key):
         return key
     except:
         for i in range(len(symbolTableStack)-1, -1, -1):
-            if key in symbolTableStack[i]:
+            if type(symbolTableStack[i]) == dict:
+                if key in symbolTableStack[i]:
                     value = symbolTableStack[i][key]
                     return int(value)
 
@@ -77,17 +78,18 @@ def update_symbol_table(key, val):
         for i in range(len(symbolTableStack) - 1, -1, -1):
             if key in symbolTableStack[i]:
                 symbolTableStack[i][key] = val
-                return
-        report_error(key)
+                return True
     except:
         print 'Exception in look up function'
+        exit(-1)
+    return False
 
 def execute_program(program):
     symbolTableStack.append({}) # global symbol table
     symbolTableStack[0]['type'] = 'GLOBAL'
     line = 0
     noOfLines = len(program)
-    noOfParameters = 0
+    fincName = None
     while line < noOfLines:
         contents = program[line].split(' ')
         if (contents[0] == 'FSTR'):
@@ -103,34 +105,47 @@ def execute_program(program):
         elif contents[0] == 'FCAL':
             funcSymbolTable = {}
             funcSymbolTable['type'] = 'FUNCTION'
+            funcSymbolTable['funcName'] = contents[1];
             funcName = contents[1]
-            line = line + 1
-            find = None
-            sub1= False
-            sub2 = False
-            contents = program[line].split(' ')
-            while line < noOfLines and contents[0] == "PUSH":
-                if contents[1] == 'DEC1':
-                    find = contents[2]
-                    sub1 = True
-                elif contents[1] == 'DEC2':
-                    find = contents[2]
-                    sub2 = True
-                else:
-                    find = contents[1]
-                noOfParameters += 1
 
-                funcSymbolTable[find] = look_up(find)
-                if(sub1):
-                    funcSymbolTable[find] -= 1
-                elif (sub2):
-                    funcSymbolTable[find] -= 2
-                line += 1
-                contents = program[line].split(' ')
-            functionReturnAddressStack.append(line)
+            # contents = program[line].split(' ')
+            # while line < noOfLines and contents[0] == "PUSH":
+            #     if contents[1] == 'DEC1':
+            #         find = contents[2]
+            #         sub1 = True
+            #     elif contents[1] == 'DEC2':
+            #         find = contents[2]
+            #         sub2 = True
+            #     else:
+            #         find = contents[1]
+            #     noOfParameters += 1
+            #
+            #     funcSymbolTable[find] = look_up(find)
+            #     if(sub1):
+            #         funcSymbolTable[find] -= 1
+            #     elif (sub2):
+            #         funcSymbolTable[find] -= 2
+            #     line += 1
+            #     contents = program[line].split(' ')
+
             symbolTableStack.append(funcSymbolTable)
+
+
+        elif contents[0] == 'PSTR':
+            'Pass'
+
+        elif contents[0] == 'PUSH':
+            value = look_up(contents[1])
+            symbolTableStack.append(value)
+
+
+        elif contents[0] == 'PEND':
+            if funcName == None:
+                report_error(funcName)
+            functionReturnAddressStack.append(line + 1)
             line = symbolTableStack[0][funcName]
-            line = line -1
+            funcName = None
+            line -= 1
             consol_log(symbolTableStack)
 
         elif contents[0] == 'ISTR' or contents[0] == 'WSTR':
@@ -160,11 +175,13 @@ def execute_program(program):
         elif contents[0] == 'IEND':
             symbolTableStack.pop()
             consol_log(symbolTableStack)
+
         elif contents[0] == 'WEND':
             if 'exit_loop' not in symbolTableStack[-1]:
                 line = symbolTableStack[-1]['start_loop']
             else:
                 symbolTableStack.pop()
+
         elif contents[0] == 'SEND':
             val = None
             try:
@@ -184,6 +201,7 @@ def execute_program(program):
             else:
                 print "ERROR: Illegal return statement in the scope"
             consol_log(symbolTableStack)
+
         elif contents[0] == 'LOAD': # for return value only
             val = symbolTableStack[-1]
             val = int(val)
@@ -192,31 +210,41 @@ def execute_program(program):
             symbolTableStack[-1][contents[1]] = val
             consol_log(symbolTableStack)
 
-        elif contents[0] == 'MULT':
-            n1 = look_up(contents[2])
-            n2 = look_up(contents[3])
-            v = n1 * n2
-            update_symbol_table(contents[1], v)
-            consol_log(symbolTableStack)
         elif contents[0] == 'PRNT':
             val = look_up(contents[1])
             print val
+
         elif contents[0] == 'FEND':
             symbolTableStack.pop()
             line = functionReturnAddressStack[-1]
             line -= 1
             consol_log(symbolTableStack)
+
+        elif contents[0] == 'MULT':
+            n1 = look_up(contents[2])
+            n2 = look_up(contents[3])
+            v = n1 * n2
+            r_value = update_symbol_table(contents[1], v)
+            if not r_value:
+                symbolTableStack[-1][contents[1]] = v
+            consol_log(symbolTableStack)
+
         elif contents[0] == 'ADD':
             n1 = look_up(contents[2])
             n2 = look_up(contents[3])
             v = n1 + n2
-            update_symbol_table(contents[1], v)
+            r_value = update_symbol_table(contents[1], v)
+            if not r_value:
+                symbolTableStack[-1][contents[1]] = v
             consol_log(symbolTableStack)
+
         elif contents[0] == 'SUB':
             n1 = look_up(contents[2])
             n2 = look_up(contents[3])
             v = n1 - n2
-            update_symbol_table(contents[1], v)
+            r_value = update_symbol_table(contents[1], v)
+            if not r_value :
+                symbolTableStack[-1][contents[1]] = v
             consol_log(symbolTableStack)
 
         line += 1

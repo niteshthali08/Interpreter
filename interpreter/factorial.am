@@ -1,21 +1,27 @@
 FSTR fact
+LOAD k
 ISTR
-CEQL n 0
+CEQL k 0
 SEND 1
 IEND
 ISTR
-CEQL n 1
+CEQL k 1
 SEND 1
 IEND
 FCAL fact
-PUSH DEC1 n // pushing n-1
-LOAD i // will take value from top of stack
-MULT n n i // n = n*i
-SEND n
+PSTR
+SUB temp k 1
+PUSH temp
+PEND
+LOAD i
+MULT k k i
+SEND k
 FEND
 MOVE n 5
 FCAL fact
+PSTR
 PUSH n
+PEND
 LOAD factorial
 PRNT factorial
 
